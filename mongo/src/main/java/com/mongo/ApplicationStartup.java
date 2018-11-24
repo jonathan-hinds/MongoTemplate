@@ -16,6 +16,8 @@ public class ApplicationStartup implements ApplicationListener<ApplicationReadyE
 
     @Override
     public void onApplicationEvent(ApplicationReadyEvent applicationReadyEvent) {
+
+        //todo - instead of using arraylist to check if the site has been visited, querey the database for the URL, if any results come back, then do not scrape this url.
         ArrayList<String> visited = new ArrayList<>();
 
         String[] seeds = {
