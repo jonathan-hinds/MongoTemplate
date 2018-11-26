@@ -1,12 +1,15 @@
 package com.mongo;
+import com.mongo.Config.MongoConfig;
 import com.mongo.Entity.URL;
 import com.mongo.Repository.URLRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationListener;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Component;
-
-import java.util.ArrayList;
+import java.util.List;
 
 @Component
 public class ApplicationStartup implements ApplicationListener<ApplicationReadyEvent> {
@@ -14,61 +17,85 @@ public class ApplicationStartup implements ApplicationListener<ApplicationReadyE
     @Autowired
     URLRepository URLRepo;
 
+    @Autowired
+    MongoTemplate template;
+
     @Override
     public void onApplicationEvent(ApplicationReadyEvent applicationReadyEvent) {
 
-        //todo - instead of using arraylist to check if the site has been visited, querey the database for the URL, if any results come back, then do not scrape this url.
-        ArrayList<String> visited = new ArrayList<>();
+        /*
+            https://en.wikipedia.org/wiki/Web_design
+            https://www.thebest10websitebuilders.com/charts/1/best-website-builders?utm_source=google&utm_medium=web%20design%20tools^e^247788941225^1t3&utm_campaign=ma_thebest10websitebuilders.com_us_e^ds_lowQS_x
+            https://www.creativebloq.com/features/best-web-design-tools
+            https://nlp.stanford.edu/IR-book/html/htmledition/stemming-and-lemmatization-1.html
+            https://artsandculture.google.com/project/street-art
+            https://en.wikipedia.org/wiki/Street_art
+            https://www.juxtapoz.com/street-art/
+            https://www.awwwards.com/books/
+            https://en.wikipedia.org/wiki/Applied_mathematics
+         */
 
         String[] seeds = {
-                "https://en.wikipedia.org/wiki/Quantum_computing",
-                "https://en.wikipedia.org/wiki/Artificial_intelligence",
-                "https://en.wikipedia.org/wiki/Artificial_neural_network",
-                "https://en.wikipedia.org/wiki/Cyber-security_regulation",
-                "https://en.wikipedia.org/wiki/Trachoma",
-                "https://en.wikipedia.org/wiki/Evolutionary_algorithm",
-                "https://en.wikipedia.org/wiki/Genetic_algorithm",
-                "https://en.wikipedia.org/wiki/Text_mining",
-                "https://en.wikipedia.org/wiki/Data_mining",
-                "https://en.wikipedia.org/wiki/Golden_ratio",
-                "https://en.wikipedia.org/wiki/Base_pair",
+                //"https://en.wikipedia.org/wiki/Computer_animation",
+                //"https://en.wikipedia.org/wiki/Animation",
+                //"https://en.wikipedia.org/wiki/Traditional_animation",
+                //"https://en.wikipedia.org/wiki/3D_modeling",
+                //"https://en.wikipedia.org/wiki/Anime",
+                "https://en.wikipedia.org/wiki/Comics",
+                "https://en.wikipedia.org/wiki/Sony",
+                "https://en.wikipedia.org/wiki/Data_structure",
+                "https://en.wikipedia.org/wiki/Data_science",
+                "https://en.wikipedia.org/wiki/Arcade_game",
+                "https://en.wikipedia.org/wiki/Flash_animation",
+                "https://en.wikipedia.org/wiki/Study_skills",
+                "https://en.wikipedia.org/wiki/Research",
+                "https://en.wikipedia.org/wiki/Cartoon",
+                "https://en.wikipedia.org/wiki/History_of_animation",
+                "https://en.wikipedia.org/wiki/Google",
+                "https://stackoverflow.com/questions/6800509/are-there-apis-for-text-analysis-mining-in-java",
         };
 
         for(String url : seeds){
             Scraper crawl = new Scraper(url);
-            if(!visited.contains(url)) {
+            if(!checkURLScanner(url)) {
                 crawl.disableLogs();
                 String textContent = crawl.getCountFromUrl();
-                if(textContent.toCharArray().length > 10) {
+                if(textContent != null && textContent.toCharArray().length > 10) {
                     URL scannedURL = new URL(url, textContent);
                     URLRepo.save(scannedURL);
                 }
-                visited.add(url);
             }
             for(String urlLayer2 : crawl.getLinks().keySet()){
                 Scraper crawlLayer2 = new Scraper(urlLayer2);
-                if(!visited.contains(urlLayer2)) {
+                if(!checkURLScanner(urlLayer2)) {
                     crawlLayer2.disableLogs();
                     String textContentLayer2 = crawlLayer2.getCountFromUrl();
-                    if(textContentLayer2.toCharArray().length > 10) {
+                    if(textContentLayer2 != null && textContentLayer2.toCharArray().length > 10) {
                         URL scannedURLLayer2 = new URL(urlLayer2, textContentLayer2);
                         URLRepo.save(scannedURLLayer2);
                     }
-                    visited.add(urlLayer2);
                 }
                 for(String urlLayer3 : crawlLayer2.getLinks().keySet()){
-                    Scraper crawlLayer3 = new Scraper(urlLayer2);
-                    if(!visited.contains(urlLayer3)) {
+                    Scraper crawlLayer3 = new Scraper(urlLayer3);
+                    if(!checkURLScanner(urlLayer3)) {
                         crawlLayer3.disableLogs();
                         String textContentLayer3 = crawlLayer3.getCountFromUrl();
-                        if(textContentLayer3.toCharArray().length > 10) {
+                        if(textContentLayer3 != null && textContentLayer3.toCharArray().length > 10) {
                             URL scannedURLLayer3 = new URL(urlLayer3, textContentLayer3);
                             URLRepo.save(scannedURLLayer3);
                         }
-                        visited.add(urlLayer3);
                     }
                 }
             }
         }
+        System.out.println("Completed:");
+    }
+
+    public boolean checkURLScanner(String url){
+        Query query = new Query();
+        query.addCriteria(Criteria.where("url").is(url));
+        return template.exists(query, URL.class);
     }
 }
+
+

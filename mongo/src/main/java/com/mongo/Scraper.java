@@ -15,10 +15,13 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import sun.util.logging.resources.logging;
 
 import java.io.*;
 import java.net.MalformedURLException;
 import java.util.*;
+
+import static org.springframework.boot.logging.LogLevel.OFF;
 
 public class Scraper {
 
@@ -322,13 +325,15 @@ public class Scraper {
             System.out.println("Successfull Status Code for: " + url);
             return xml;
         }catch(MalformedURLException e){
-            System.out.println("Malformed URL in" + url);
+            System.out.println("Malformed URL in " + url);
         }catch(FailingHttpStatusCodeException e){
             System.out.println("Failed Status Code for: " + url);
         }catch(IOException e){
             System.out.println("IOERROR");
         }catch(NoClassDefFoundError e){
-
+            System.out.println("NoClassDefFoundError");
+        } catch(IllegalArgumentException e){
+            System.out.println("IllegalArgumentException");
         }
         return null;
     }
@@ -370,6 +375,8 @@ public class Scraper {
         WebClient client = new WebClient();
         client.getOptions().setCssEnabled(false);
         client.getOptions().setJavaScriptEnabled(false);
+        client.getOptions().setTimeout(10000);
+        client.getCache().setMaxSize(0);
         client.setRefreshHandler(new ThreadedRefreshHandler());
         return client;
     }
@@ -536,6 +543,9 @@ public class Scraper {
     public void disableLogs(){
         //LogFactory.getFactory().setAttribute("org.apache.commons.logging.Log", "org.apache.commons.logging.impl.NoOpLog");
         RedwoodConfiguration.current().clear().apply();
+
+
+
         Set<String> loggers = new HashSet<>(Arrays.asList("org.apache.http", "groovyx.net.http"));
     }
 
