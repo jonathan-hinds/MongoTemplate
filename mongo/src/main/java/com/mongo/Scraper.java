@@ -218,6 +218,31 @@ public class Scraper {
     }
 
     /**
+     * @return String representation of the text displayed on a page.
+     */
+    public String getTextFromSite(){
+        String xml = getXML(this.url);
+        System.out.println(this.url);
+        if(xml != null) {
+            getLinksXML(xml);
+            System.out.println(parseHTML(xml));
+            return parseHTML(xml);
+        }
+        return null;
+    }
+
+    /**
+     * @param pageText - text that will be checked for fitting in a specific criteria.
+     * @param criteria - Criteria for which this page must match to return true.
+     * @return
+     */
+    public boolean checkCriteria(String pageText, String criteria){
+        Pattern pattern = Pattern.compile(criteria);
+        Matcher matcher = pattern.matcher(pageText);
+        return matcher.find();
+    }
+
+    /**
      * @param topAmount - amount of tags to retrieve from this of words (this.count)
      * @return - return the words with the highest frequency
      * todo - this has not been updated to use the Frequency object in this.count's value.
@@ -543,12 +568,8 @@ public class Scraper {
     public void disableLogs(){
         //LogFactory.getFactory().setAttribute("org.apache.commons.logging.Log", "org.apache.commons.logging.impl.NoOpLog");
         RedwoodConfiguration.current().clear().apply();
-
-
-
         Set<String> loggers = new HashSet<>(Arrays.asList("org.apache.http", "groovyx.net.http"));
     }
-
 
     /**
      * @param input - file URL from which we are downloading the PDF
@@ -563,7 +584,6 @@ public class Scraper {
             e.printStackTrace();
         }
     }
-
 
     /**
      * @param xml - String representation for the HTML / XML content of a web page, from which the
@@ -762,7 +782,6 @@ public class Scraper {
         return docStat;
     }
 
-
     /**
      * @param file - pdf file to be parsed into a string
      * @return - String text content of the original input pdf file.
@@ -781,7 +800,6 @@ public class Scraper {
         }
         return null;
     }
-
 
     /**
      * @param doc - a pdf doc loaded using PDFbox - to be converted into plain text as a String
